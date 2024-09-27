@@ -8,7 +8,7 @@ const CHUNK_SIZE = 32_500;
 const db = mongo.db('certstream');
 const baseDomains = db.collection('baseDomains');
 
-(async () => {
+const main = async () => {
   console.log('Retrieving total entries count...');
   const totalEntries = await baseDomains.countDocuments({});
   console.log(`Found ${totalEntries} entries`);
@@ -40,4 +40,9 @@ const baseDomains = db.collection('baseDomains');
 
     lastValue = chunk[chunk.length - 1].value;
   }
-})();
+};
+
+mongo
+  .connect()
+  .then(main)
+  .then(() => process.exit(0));
