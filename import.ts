@@ -9,7 +9,9 @@ const db = mongo.db('certstream');
 const baseDomains = db.collection('baseDomains');
 
 (async () => {
+  console.log('Retrieving total entries count...');
   const totalEntries = await baseDomains.countDocuments({});
+  console.log(`Found ${totalEntries} entries`);
 
   let lastValue = null;
   for (let i = 0; true; i++) {
