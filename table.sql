@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS domains (
+  domain VARCHAR(255) PRIMARY KEY,
+  tld VARCHAR(50) NOT NULL,
+  dnssec BOOLEAN DEFAULT NULL,
+  registrar VARCHAR(255) DEFAULT NULL,
+  created_at DATE DEFAULT NULL,
+  processing BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_dnssec ON domains (dnssec);

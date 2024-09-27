@@ -1,0 +1,19 @@
+{
+  "name": "dnssec-analyzer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx app.ts"
+  },
+  "dependencies": {
+    "mongodb": "^6.9.0",
+    "postgres": "^3.4.4",
+    "tldts": "^6.1.47",
+    "tsx": "^4.19.1",
+    "whoiser": "^1.18.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}
