@@ -9,8 +9,8 @@ const db = mongo.db('certstream');
 const baseDomains = db.collection('baseDomains');
 
 const main = async () => {
-  console.log('Retrieving total entries count...');
-  const totalEntries = await baseDomains.countDocuments({});
+  console.log('Estimating total entries count...');
+  const totalEntries = await baseDomains.estimatedDocumentCount();
   console.log(`Found ${totalEntries} entries`);
 
   let lastValue = null;
@@ -33,8 +33,8 @@ const main = async () => {
     }));
     await sql`INSERT INTO domains ${sql(data)}`;
     console.log(
-      `Inserted ${(i + 1) * CHUNK_SIZE}/${totalEntries} domains (${
-        (((i + 1) * CHUNK_SIZE) / totalEntries) * 100
+      `Inserted ${(i + 1) * CHUNK_SIZE}/~${totalEntries} domains (${
+        (~((i + 1) * CHUNK_SIZE) / totalEntries) * 100
       }%)`
     );
 
