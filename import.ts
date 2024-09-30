@@ -27,10 +27,15 @@ const main = async () => {
       break;
     }
 
-    const data = chunk.map((entry) => ({
-      domain: entry.value,
-      tld: getPublicSuffix(entry.value),
-    }));
+    const data = chunk
+      .map((entry) => ({
+        domain: entry.value,
+        tld: getPublicSuffix(entry.value),
+      }))
+      .filter((entry): entry is { domain: string; tld: string } =>
+        Boolean(entry.tld)
+      );
+
     await sql`INSERT INTO domains ${sql(data)}`;
     console.log(
       `Inserted ${(i + 1) * CHUNK_SIZE}/~${totalEntries} domains (${
