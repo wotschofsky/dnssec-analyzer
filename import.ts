@@ -18,7 +18,7 @@ const main = async () => {
     const query = lastValue ? { value: { $gt: lastValue } } : {};
 
     const chunk = await baseDomains
-      .find(query)
+      .find(query, { projection: { value: 1 } })
       .sort({ value: 1 })
       .limit(CHUNK_SIZE)
       .toArray();
