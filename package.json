@@ -7,7 +7,6 @@
     "start": "tsx app.ts"
   },
   "dependencies": {
-    "mongodb": "^6.9.0",
     "postgres": "^3.4.4",
     "tldts": "^6.1.47",
     "tsx": "^4.19.1",
