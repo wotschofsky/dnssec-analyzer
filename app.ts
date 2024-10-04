@@ -88,6 +88,7 @@ const processEntry = async () => {
       SELECT domain
       FROM domains
       WHERE dnssec IS NULL
+      AND processing = false
       LIMIT 1
     )
     RETURNING domain
