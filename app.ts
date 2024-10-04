@@ -36,6 +36,10 @@ const requestDoH = async (domain: string, type: string) => {
       headers: { Accept: 'application/dns-json' },
     }
   );
+  if (!response.ok)
+    throw new Error(
+      `DoH request failed with status ${response.status} ${response.statusText} for ${domain}`
+    );
   const json = await response.json();
   return json as DoHResponse;
 };
@@ -46,9 +50,14 @@ const getDnssecStatus = async (domain: string) => {
 };
 
 const getWhois = async (domain: string) => {
-  const response = await whoiser(domain, { follow: 1 });
-  const responder = Object.keys(response)[0];
-  return response[responder] as WhoisSearchResult;
+  try {
+    const response = await whoiser(domain, { follow: 1 });
+    const responder = Object.keys(response)[0];
+    return response[responder] as WhoisSearchResult;
+  } catch (e) {
+    console.warn(`Failed to get whois for ${domain}: ${e}`);
+    return {};
+  }
 };
 
 const analyzeDomain = async (domain: string) => {
@@ -89,7 +98,11 @@ const processEntry = async () => {
 
   const { domain } = rows[0];
 
-  const result = await analyzeDomain(domain);
+  const result = await analyzeDomain(domain).catch((e) => {
+    console.error(`Failed to analyze domain ${domain}: ${e}`);
+    return null;
+  });
+  if (!result) return false;
 
   const values = {
     dnssec: result.dnssec,
