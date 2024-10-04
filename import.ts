@@ -3,12 +3,9 @@ import readline from 'node:readline';
 import fs from 'node:fs';
 
 import { sql } from './lib/postgres';
+import { formatNumber } from './utils';
 
 const CHUNK_SIZE = 32_500;
-
-// Format a number with thousands separators
-const formatNumber = (input: number) =>
-  input.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 if (!process.env.INPUT_PATH) {
   console.error('INPUT_PATH environment variable is required');

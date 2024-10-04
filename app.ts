@@ -1,6 +1,7 @@
 import whoiser, { type WhoisSearchResult } from 'whoiser';
 
 import { sql } from './lib/postgres';
+import { formatNumber } from './utils';
 
 type DoHResponse = {
   Status: number;
@@ -70,6 +71,7 @@ const parseDateSafe = (date: string): Date | null => {
 };
 
 (async () => {
+  const startTime = Date.now();
   const rows =
     await sql`UPDATE domains SET processing = true WHERE dnssec IS NULL LIMIT 1 RETURNING domain`;
   if (rows.length === 0) {
@@ -81,6 +83,8 @@ const parseDateSafe = (date: string): Date | null => {
   const result = await analyzeDomain(domain);
 
   await sql`UPDATE domains SET dnssec = ${result.dnssec}, registrar = ${result.registrar}, created_at = ${result.createdAt}, processing = false WHERE domain = ${domain}`;
+  const elapsed = Date.now() - startTime;
+  console.log(`Processed domain ${domain} in ${formatNumber(elapsed)}ms`);
 })().then(() => {
   console.log('Finished');
   process.exit(0);
