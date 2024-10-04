@@ -70,7 +70,7 @@ const parseDateSafe = (date: string): Date | null => {
   return null;
 };
 
-(async () => {
+const processEntry = async () => {
   const startTime = Date.now();
   const rows = await sql`
     UPDATE domains
@@ -84,16 +84,27 @@ const parseDateSafe = (date: string): Date | null => {
     RETURNING domain
   `;
   if (rows.length === 0) {
-    return;
+    return false;
   }
 
   const { domain } = rows[0];
 
   const result = await analyzeDomain(domain);
 
-  await sql`UPDATE domains SET dnssec = ${result.dnssec}, registrar = ${result.registrar}, created_at = ${result.createdAt}, processing = false WHERE domain = ${domain}`;
+  const values = {
+    dnssec: result.dnssec,
+    registrar: result.registrar || null,
+    createdAt: result.createdAt || null,
+  };
+  await sql`UPDATE domains SET dnssec = ${values.dnssec}, registrar = ${values.registrar}, created_at = ${values.createdAt}, processing = false WHERE domain = ${domain}`;
   const elapsed = Date.now() - startTime;
   console.log(`Processed domain ${domain} in ${formatNumber(elapsed)}ms`);
+
+  return true;
+};
+
+(async () => {
+  while (await processEntry()) {}
 })().then(() => {
   console.log('Finished');
   process.exit(0);
