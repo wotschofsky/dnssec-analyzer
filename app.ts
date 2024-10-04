@@ -86,9 +86,14 @@ const processEntry = async () => {
     SET processing = true
     WHERE domain = (
       SELECT domain
-      FROM domains
-      WHERE dnssec IS NULL
-      AND processing = false
+      FROM (
+        SELECT domain
+        FROM domains
+        WHERE dnssec IS NULL
+        AND processing = false
+        LIMIT 50
+      ) AS candidate_domains
+      ORDER BY RANDOM()
       LIMIT 1
     )
     RETURNING domain
