@@ -4,7 +4,8 @@ services:
     deploy:
       mode: replicated
       replicas: 50
-    restart: always
+    environment:
+      - DATABASE_URL=postgres://postgres:secret@postgres:5432
   postgres:
     image: postgres:16-alpine
     restart: always

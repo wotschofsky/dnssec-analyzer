@@ -70,9 +70,9 @@ const parseDateSafe = (date: string): Date | null => {
 };
 
 (async () => {
-  const rows = await sql`UPDATE domains SET processing = true WHERE dnssec IS NULL LIMIT 1 RETURNING domain`;
+  const rows =
+    await sql`UPDATE domains SET processing = true WHERE dnssec IS NULL LIMIT 1 RETURNING domain`;
   if (rows.length === 0) {
-    console.log('No domains to process');
     return;
   }
 
@@ -81,4 +81,7 @@ const parseDateSafe = (date: string): Date | null => {
   const result = await analyzeDomain(domain);
 
   await sql`UPDATE domains SET dnssec = ${result.dnssec}, registrar = ${result.registrar}, created_at = ${result.createdAt}, processing = false WHERE domain = ${domain}`;
-})()
+})().then(() => {
+  console.log('Finished');
+  process.exit(0);
+});
