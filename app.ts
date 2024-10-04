@@ -72,8 +72,17 @@ const parseDateSafe = (date: string): Date | null => {
 
 (async () => {
   const startTime = Date.now();
-  const rows =
-    await sql`UPDATE domains SET processing = true WHERE dnssec IS NULL LIMIT 1 RETURNING domain`;
+  const rows = await sql`
+    UPDATE domains
+    SET processing = true
+    WHERE domain = (
+      SELECT domain
+      FROM domains
+      WHERE dnssec IS NULL
+      LIMIT 1
+    )
+    RETURNING domain
+  `;
   if (rows.length === 0) {
     return;
   }
