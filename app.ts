@@ -3,6 +3,10 @@ import whoiser, { type WhoisSearchResult } from 'whoiser';
 import { sql } from './lib/postgres';
 import { formatNumber } from './utils';
 
+const parallelism = process.env.PARALLELISM
+  ? parseInt(process.env.PARALLELISM)
+  : 1;
+
 type DoHResponse = {
   Status: number;
   TC: boolean;
@@ -122,9 +126,15 @@ const processEntry = async () => {
   return true;
 };
 
-(async () => {
-  while (await processEntry()) {}
-})().then(() => {
+const start = async () => {
+  await Promise.all(
+    Array.from({ length: parallelism }, async () => {
+      while (await processEntry()) {}
+    })
+  );
+};
+
+start().then(() => {
   console.log('Finished');
   process.exit(0);
 });
