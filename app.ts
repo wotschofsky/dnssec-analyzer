@@ -53,6 +53,11 @@ const getDnssecStatus = async (domain: string) => {
   return result.AD;
 };
 
+const getDnsRecords = async (domain: string, type: string) => {
+  const result = await requestDoH(domain, type);
+  return result.Answer?.map((e) => e.data) || [];
+};
+
 const getWhois = async (domain: string) => {
   try {
     const response = await whoiser(domain, { follow: 1 });
@@ -65,15 +70,22 @@ const getWhois = async (domain: string) => {
 };
 
 const analyzeDomain = async (domain: string) => {
-  const [dnssec, whois] = await Promise.all([
-    getDnssecStatus(domain),
-    getWhois(domain),
-  ]);
+  const [dnssec, whois, recordsNs, recordsDs, recordsDnskey] =
+    await Promise.all([
+      getDnssecStatus(domain),
+      getWhois(domain),
+      getDnsRecords(domain, 'NS'),
+      getDnsRecords(domain, 'DS'),
+      getDnsRecords(domain, 'DNSKEY'),
+    ]);
 
   return {
     dnssec,
-    registrar: whois['Registrar'] as string | null,
+    registrar: (whois['Registrar'] as string) || 'unknown',
     createdAt: parseDateSafe(whois['Created Date'] as string),
+    recordsNs,
+    recordsDs,
+    recordsDnskey,
   };
 };
 
@@ -114,12 +126,18 @@ const processEntry = async () => {
   });
   if (!result) return false;
 
-  const values = {
-    dnssec: result.dnssec,
-    registrar: result.registrar || null,
-    createdAt: result.createdAt || null,
-  };
-  await sql`UPDATE domains SET dnssec = ${values.dnssec}, registrar = ${values.registrar}, created_at = ${values.createdAt}, processing = false WHERE domain = ${domain}`;
+  await sql`
+    UPDATE domains
+    SET dnssec = ${result.dnssec},
+        registrar = ${result.registrar},
+        created_at = ${result.createdAt || null},
+        records_ns = ${result.recordsNs},
+        records_ds = ${result.recordsDs},
+        records_dnskey = ${result.recordsDnskey},
+        analyzed_at = NOW(),
+        processing = FALSE
+    WHERE domain = ${domain}
+  `;
   const elapsed = Date.now() - startTime;
   console.log(`Processed domain ${domain} in ${formatNumber(elapsed)}ms`);
 
