@@ -107,7 +107,7 @@ const processEntry = async () => {
         FROM domains
         WHERE dnssec IS NULL
         AND processing = false
-        LIMIT 50
+        LIMIT 100
       ) AS candidate_domains
       ORDER BY RANDOM()
       LIMIT 1
