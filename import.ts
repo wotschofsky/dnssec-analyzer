@@ -12,6 +12,12 @@ if (!process.env.INPUT_PATH) {
   process.exit(1);
 }
 
+if (!process.env.MODE || !['raw', 'json'].includes(process.env.MODE)) {
+  console.error('MODE environment variable is required');
+  process.exit(1);
+}
+const MODE = process.env.MODE as 'raw' | 'json';
+
 const rl = readline.createInterface({
   input: fs.createReadStream(process.env.INPUT_PATH),
   crlfDelay: Infinity,
@@ -43,14 +49,16 @@ const main = async () => {
 const processChunk = async (rawChunk: string[]) => {
   const domains = rawChunk
     .map((line) => {
+      if (MODE === 'raw') return line;
+
       try {
-        return JSON.parse(line) as { value: string };
+        const parsed = JSON.parse(line) as { value: string };
+        return parsed?.value;
       } catch (e) {
         console.error(`Failed to parse line: ${line}`);
         return null;
       }
     })
-    .map((e) => e?.value)
     .filter((e): e is string => Boolean(e));
 
   const data = domains
