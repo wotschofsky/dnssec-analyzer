@@ -70,7 +70,10 @@ const processChunk = async (rawChunk: string[]) => {
       Boolean(entry.tld)
     );
 
-  await sql`INSERT INTO domains ${sql(data)}`;
+  await sql`
+    INSERT INTO domains ${sql(data)}
+    ON CONFLICT (domain) DO NOTHING
+  `;
 };
 
 main().then(() => process.exit(0));
