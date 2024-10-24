@@ -3,7 +3,7 @@ import readline from 'node:readline';
 import fs from 'node:fs';
 
 import { sql } from './lib/postgres';
-import { formatNumber } from './utils';
+import { formatNumber, getBaseDomain } from './utils';
 
 const CHUNK_SIZE = 32_500;
 
@@ -63,7 +63,7 @@ const processChunk = async (rawChunk: string[]) => {
 
   const data = domains
     .map((domain) => ({
-      domain: domain,
+      domain: getBaseDomain(domain),
       tld: getPublicSuffix(domain),
     }))
     .filter((entry): entry is { domain: string; tld: string } =>
