@@ -1,7 +1,6 @@
-import whoiser, { type WhoisSearchResult } from 'whoiser';
-
-import { sql } from './lib/postgres';
 import { formatNumber } from './utils';
+import { getWhoisSummary } from './lib/whois';
+import { sql } from './lib/postgres';
 
 const parallelism = process.env.PARALLELISM
   ? parseInt(process.env.PARALLELISM)
@@ -58,22 +57,11 @@ const getDnsRecords = async (domain: string, type: string) => {
   return result.Answer?.map((e) => e.data) || [];
 };
 
-const getWhois = async (domain: string) => {
-  try {
-    const response = await whoiser(domain, { follow: 1 });
-    const responder = Object.keys(response)[0];
-    return response[responder] as WhoisSearchResult;
-  } catch (e) {
-    console.warn(`Failed to get whois for ${domain}: ${e}`);
-    return {};
-  }
-};
-
 const analyzeDomain = async (domain: string) => {
   const [dnssec, whois, recordsNs, recordsDs, recordsDnskey] =
     await Promise.all([
       getDnssecStatus(domain),
-      getWhois(domain),
+      getWhoisSummary(domain),
       getDnsRecords(domain, 'NS'),
       getDnsRecords(domain, 'DS'),
       getDnsRecords(domain, 'DNSKEY'),
@@ -81,18 +69,12 @@ const analyzeDomain = async (domain: string) => {
 
   return {
     dnssec,
-    registrar: (whois['Registrar'] as string) || 'unknown',
-    createdAt: parseDateSafe(whois['Created Date'] as string),
+    registrar: whois.registered ? whois.registrar : 'not registered',
+    createdAt: whois.registered ? whois.createdAt : null,
     recordsNs,
     recordsDs,
     recordsDnskey,
   };
-};
-
-const parseDateSafe = (date: string): Date | null => {
-  const parsed = new Date(date);
-  if (!isNaN(parsed.getTime())) return parsed;
-  return null;
 };
 
 const processEntry = async () => {
