@@ -87,7 +87,7 @@ export const getWhoisSummary = async (
           : null,
     };
   } catch (error) {
-    console.error(error);
+    console.warn(`${domain}: ${error.message}`);
     return {
       registered: true,
       registrar: null,
