@@ -99,7 +99,8 @@ const processEntry = async () => {
     const rows = await sql`
       SELECT domain
       FROM domains
-      WHERE dnssec IS NULL
+      WHERE registrar = 'unknown'
+      AND tld NOT IN ('de', 'ch')
       LIMIT 1
       FOR UPDATE SKIP LOCKED;
     `;
