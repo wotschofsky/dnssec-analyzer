@@ -13,4 +13,3 @@ CREATE TABLE IF NOT EXISTS domains (
 
 CREATE INDEX IF NOT EXISTS idx_dnssec ON domains (dnssec);
 CREATE INDEX IF NOT EXISTS idx_registrar ON domains (registrar);
-CREATE INDEX IF NOT EXISTS idx_records_ns ON domains USING GIN (records_ns);
