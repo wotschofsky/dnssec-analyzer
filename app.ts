@@ -60,11 +60,26 @@ const getDnsRecords = async (domain: string, type: string) => {
 const analyzeDomain = async (domain: string) => {
   const [dnssec, whois, recordsNs, recordsDs, recordsDnskey] =
     await Promise.all([
-      getDnssecStatus(domain),
-      getWhoisSummary(domain),
-      getDnsRecords(domain, 'NS'),
-      getDnsRecords(domain, 'DS'),
-      getDnsRecords(domain, 'DNSKEY'),
+      (async () => {
+        const result = await getDnssecStatus(domain);
+        return result;
+      })(),
+      (async () => {
+        const result = await getWhoisSummary(domain);
+        return result;
+      })(),
+      (async () => {
+        const result = await getDnsRecords(domain, 'NS');
+        return result;
+      })(),
+      (async () => {
+        const result = await getDnsRecords(domain, 'DS');
+        return result;
+      })(),
+      (async () => {
+        const result = await getDnsRecords(domain, 'DNSKEY');
+        return result;
+      })(),
     ]);
 
   return {
@@ -79,49 +94,51 @@ const analyzeDomain = async (domain: string) => {
 
 const processEntry = async () => {
   const startTime = Date.now();
-  const rows = await sql`
-    UPDATE domains
-    SET processing = true
-    WHERE domain = (
+
+  await sql.begin(async (sql) => {
+    const rows = await sql`
       SELECT domain
-      FROM (
-        SELECT domain
-        FROM domains
-        WHERE dnssec IS NULL
-        AND processing = false
-        LIMIT 100
-      ) AS candidate_domains
-      ORDER BY RANDOM()
+      FROM domains
+      WHERE dnssec IS NULL
       LIMIT 1
-    )
-    RETURNING domain
-  `;
-  if (rows.length === 0) {
-    return false;
-  }
+      FOR UPDATE SKIP LOCKED;
+    `;
 
-  const { domain } = rows[0];
+    if (rows.length === 0) {
+      return false;
+    }
 
-  const result = await analyzeDomain(domain).catch((e) => {
-    console.error(`Failed to analyze domain ${domain}: ${e}`);
-    return null;
+    const { domain } = rows[0];
+
+    const result = await analyzeDomain(domain).catch((e) => {
+      console.error(`Failed to analyze domain ${domain}: ${e}`);
+      return null;
+    });
+
+    if (!result) {
+      await sql`
+        UPDATE domains
+        SET analyzed_at = NOW()
+        WHERE domain = ${domain};
+      `;
+      return false;
+    }
+
+    await sql`
+      UPDATE domains
+      SET dnssec = ${result.dnssec},
+          registrar = ${result.registrar},
+          created_at = ${result.createdAt || null},
+          records_ns = ${result.recordsNs},
+          records_ds = ${result.recordsDs},
+          records_dnskey = ${result.recordsDnskey},
+          analyzed_at = NOW()
+      WHERE domain = ${domain};
+    `;
+
+    const elapsed = Date.now() - startTime;
+    console.log(`Processed domain ${domain} in ${formatNumber(elapsed)}ms`);
   });
-  if (!result) return false;
-
-  await sql`
-    UPDATE domains
-    SET dnssec = ${result.dnssec},
-        registrar = ${result.registrar},
-        created_at = ${result.createdAt || null},
-        records_ns = ${result.recordsNs},
-        records_ds = ${result.recordsDs},
-        records_dnskey = ${result.recordsDnskey},
-        analyzed_at = NOW(),
-        processing = FALSE
-    WHERE domain = ${domain}
-  `;
-  const elapsed = Date.now() - startTime;
-  console.log(`Processed domain ${domain} in ${formatNumber(elapsed)}ms`);
 
   return true;
 };
