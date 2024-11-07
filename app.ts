@@ -103,7 +103,7 @@ const processEntry = async () => {
     if (!result) {
       await sql`
         UPDATE domains
-        SET analyzed_at = NOW()
+        SET domain = ${domain}
         WHERE domain = ${domain};
       `;
       return false;
