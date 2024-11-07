@@ -1,6 +1,7 @@
 import { formatNumber } from './utils';
 import { getWhoisSummary } from './lib/whois';
 import { sql } from './lib/postgres';
+import { UNSUPPORTED_TLDS } from './lib/constants';
 
 const parallelism = process.env.PARALLELISM
   ? parseInt(process.env.PARALLELISM)
@@ -85,7 +86,7 @@ const processEntry = async () => {
       SELECT domain
       FROM domains
       WHERE registrar = 'unknown'
-      AND tld NOT IN ('de', 'ch')
+      AND NOT (tld = ANY(${sql.array(UNSUPPORTED_TLDS, 1043)}))
       LIMIT 1
       FOR UPDATE SKIP LOCKED;
     `;
