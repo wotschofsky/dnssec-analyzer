@@ -60,26 +60,11 @@ const getDnsRecords = async (domain: string, type: string) => {
 const analyzeDomain = async (domain: string) => {
   const [dnssec, whois, recordsNs, recordsDs, recordsDnskey] =
     await Promise.all([
-      (async () => {
-        const result = await getDnssecStatus(domain);
-        return result;
-      })(),
-      (async () => {
-        const result = await getWhoisSummary(domain);
-        return result;
-      })(),
-      (async () => {
-        const result = await getDnsRecords(domain, 'NS');
-        return result;
-      })(),
-      (async () => {
-        const result = await getDnsRecords(domain, 'DS');
-        return result;
-      })(),
-      (async () => {
-        const result = await getDnsRecords(domain, 'DNSKEY');
-        return result;
-      })(),
+      getDnssecStatus(domain),
+      getWhoisSummary(domain),
+      getDnsRecords(domain, 'NS'),
+      getDnsRecords(domain, 'DS'),
+      getDnsRecords(domain, 'DNSKEY'),
     ]);
 
   return {
