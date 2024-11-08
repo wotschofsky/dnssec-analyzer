@@ -69,7 +69,9 @@ const analyzeDomain = async (domain: string) => {
 
   return {
     dnssec,
-    registrar: whois.registered ? whois.registrar : 'not registered',
+    registrar: whois.registered
+      ? whois.registrar || 'unknown'
+      : 'not registered',
     createdAt: whois.registered ? whois.createdAt : null,
     recordsNs,
     recordsDs,
