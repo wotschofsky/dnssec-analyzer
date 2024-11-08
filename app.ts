@@ -100,7 +100,7 @@ const processEntry = async () => {
     const rows = await sql`
       SELECT domain
       FROM domains
-      WHERE (registrar IS NULL OR registrar = 'unknown')
+      WHERE registrar IS NULL
       AND NOT (tld = ANY(${sql.array(UNSUPPORTED_TLDS, 1043)}))
       LIMIT 1
       FOR UPDATE SKIP LOCKED;
