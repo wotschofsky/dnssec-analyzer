@@ -1,5 +1,5 @@
 import { formatNumber } from './utils';
-import { getWhoisSummary } from './lib/whois';
+import { getWhoisSummary, type WhoisSummary } from './lib/whois';
 import { sql } from './lib/postgres';
 import { UNSUPPORTED_TLDS } from './lib/constants';
 
@@ -58,18 +58,10 @@ const getDnsRecords = async (domain: string, type: string) => {
   return result.Answer?.map((e) => e.data) || [];
 };
 
-const resolveRegistrarResult = (
-  whois:
-    | { registered: false }
-    | {
-        registered: true;
-        registrar: string | null;
-        createdAt: Date | null;
-      }
-) => {
+const resolveRegistrarResult = (whois: WhoisSummary) => {
   if (!whois.registered) return 'not registered';
   if (whois.registrar) return whois.registrar;
-  if (whois.createdAt) return 'unknown';
+  if (whois.createdAt || whois.dnssec) return 'unknown';
   return null;
 };
 

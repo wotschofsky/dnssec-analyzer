@@ -29,6 +29,7 @@ export const lookupWhois = async (domain: string) => {
 };
 
 const UNREGISTERED_INDICATORS = [
+  'available for registration',
   'is free', // .nl
   'no data found',
   'no match',
@@ -38,7 +39,7 @@ const UNREGISTERED_INDICATORS = [
   'status: free',
 ];
 
-type WhoisSummary =
+export type WhoisSummary =
   | {
       registered: false;
     }
@@ -46,6 +47,7 @@ type WhoisSummary =
       registered: true;
       registrar: string | null;
       createdAt: Date | null;
+      dnssec: string | null;
     };
 
 export const getWhoisSummary = async (
@@ -85,6 +87,7 @@ export const getWhoisSummary = async (
         firstResult && 'Created Date' in firstResult
           ? parseDateSafe(firstResult['Created Date'].toString())
           : null,
+      dnssec: firstResult['DNSSEC']?.toString() || null,
     };
   } catch (error) {
     console.warn(`${domain}: ${error.message}`);
@@ -92,6 +95,7 @@ export const getWhoisSummary = async (
       registered: true,
       registrar: null,
       createdAt: null,
+      dnssec: null,
     };
   }
 };
