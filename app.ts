@@ -98,7 +98,7 @@ const processEntry = async () => {
 
   await sql.begin(async (sql) => {
     const rows = await sql`
-      SELECT domain
+      SELECT domain, registrar
       FROM domains
       WHERE registrar IS NULL
       AND NOT (tld = ANY(${sql.array(UNSUPPORTED_TLDS, 1043)}))
@@ -110,7 +110,7 @@ const processEntry = async () => {
       return false;
     }
 
-    const { domain } = rows[0];
+    const { domain, registrar: initialRegistrar } = rows[0];
 
     const result = await analyzeDomain(domain).catch((e) => {
       console.error(`Failed to analyze domain ${domain}: ${e}`);
@@ -139,7 +139,11 @@ const processEntry = async () => {
     `;
 
     const elapsed = Date.now() - startTime;
-    console.log(`Processed domain ${domain} in ${formatNumber(elapsed)}ms`);
+    console.log(
+      `Processed domain ${domain} in ${formatNumber(elapsed)}ms, success: ${
+        result.registrar === initialRegistrar ? '❌' : '✅'
+      }`
+    );
   });
 
   return true;
