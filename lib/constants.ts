@@ -1,4 +1,4 @@
-export const UNSUPPORTED_TLDS = [
+export const UNSUPPORTED_WHOIS_TLDS = [
   'ac.bd',
   'ao',
   'bb',
@@ -112,6 +112,4 @@ export const UNSUPPORTED_TLDS = [
   'xn--mgbcpq6gpa1a',
   'xn--node',
   'xn--wgbh1c',
-
-  'ae', // should work but idk
 ];

@@ -1,7 +1,6 @@
 import { formatNumber } from './utils';
-import { getWhoisSummary, type WhoisSummary } from './lib/whois';
+import { getWhoisSummary } from './lib/whois';
 import { sql } from './lib/postgres';
-import { UNSUPPORTED_TLDS } from './lib/constants';
 
 const parallelism = process.env.PARALLELISM
   ? parseInt(process.env.PARALLELISM)
@@ -58,13 +57,6 @@ const getDnsRecords = async (domain: string, type: string) => {
   return result.Answer?.map((e) => e.data) || [];
 };
 
-const resolveRegistrarResult = (whois: WhoisSummary) => {
-  if (!whois.registered) return 'not registered';
-  if (whois.registrar) return whois.registrar;
-  if (whois.createdAt || whois.dnssec) return 'unknown';
-  return null;
-};
-
 const analyzeDomain = async (domain: string) => {
   const [dnssec, whois, recordsNs, recordsDs, recordsDnskey] =
     await Promise.all([
@@ -77,8 +69,8 @@ const analyzeDomain = async (domain: string) => {
 
   return {
     dnssec,
-    registrar: resolveRegistrarResult(whois),
-    createdAt: whois.registered ? whois.createdAt : null,
+    registrar: whois.registrar,
+    createdAt: whois.createdAt,
     recordsNs,
     recordsDs,
     recordsDnskey,
@@ -93,7 +85,6 @@ const processEntry = async () => {
       SELECT domain, registrar
       FROM domains
       WHERE registrar IS NULL
-      AND NOT (tld = ANY(${sql.array(UNSUPPORTED_TLDS, 1043)}))
       LIMIT 1
       FOR UPDATE SKIP LOCKED;
     `;

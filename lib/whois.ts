@@ -3,6 +3,8 @@
 import whoiser, { type WhoisSearchResult } from 'whoiser';
 
 import { getBaseDomain } from '../utils';
+import { getPublicSuffix } from 'tldts';
+import { UNSUPPORTED_WHOIS_TLDS } from './constants';
 
 const parseDateSafe = (date: string): Date | null => {
   const parsed = new Date(date);
@@ -39,20 +41,25 @@ const UNREGISTERED_INDICATORS = [
   'status: free',
 ];
 
-export type WhoisSummary =
-  | {
-      registered: false;
-    }
-  | {
-      registered: true;
-      registrar: string | null;
-      createdAt: Date | null;
-      dnssec: string | null;
-    };
+const resolveRegistrarResult = (whois: {
+  registrar: string | null;
+  createdAt: Date | null;
+  dnssec: string | null;
+}) => {
+  if (whois.registrar) return whois.registrar;
+  if (whois.createdAt || whois.dnssec) return 'unknown';
+  return null;
+};
 
-export const getWhoisSummary = async (
-  domain: string
-): Promise<WhoisSummary> => {
+export const getWhoisSummary = async (domain: string) => {
+  const tld = getPublicSuffix(domain);
+  if (!tld || UNSUPPORTED_WHOIS_TLDS.includes(tld)) {
+    return {
+      registrar: 'unknown',
+      createdAt: null,
+    };
+  }
+
   const baseDomain = getBaseDomain(domain);
 
   try {
@@ -76,26 +83,31 @@ export const getWhoisSummary = async (
       )
     ) {
       return {
-        registered: false,
+        registrar: 'not registered',
+        createdAt: null,
       };
     }
 
+    const tempRegistrar = firstResult['Registrar']?.toString() || null;
+    const createdAt =
+      firstResult && 'Created Date' in firstResult
+        ? parseDateSafe(firstResult['Created Date'].toString())
+        : null;
+    const dnssec = firstResult['DNSSEC']?.toString() || null;
+
     return {
-      registered: true,
-      registrar: firstResult['Registrar']?.toString() || null,
-      createdAt:
-        firstResult && 'Created Date' in firstResult
-          ? parseDateSafe(firstResult['Created Date'].toString())
-          : null,
-      dnssec: firstResult['DNSSEC']?.toString() || null,
+      registrar: resolveRegistrarResult({
+        registrar: tempRegistrar,
+        createdAt,
+        dnssec,
+      }),
+      createdAt,
     };
   } catch (error) {
     console.warn(`${domain}: ${error.message}`);
     return {
-      registered: true,
       registrar: null,
       createdAt: null,
-      dnssec: null,
     };
   }
 };
