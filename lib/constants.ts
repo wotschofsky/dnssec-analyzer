@@ -16,6 +16,7 @@ export const UNSUPPORTED_TLDS = [
   'co.zw',
   'com.bb',
   'com.bd',
+  'com.br',
   'com.bs',
   'com.bt',
   'com.cu',
@@ -75,6 +76,7 @@ export const UNSUPPORTED_TLDS = [
   'info.np',
   'info.vn',
   'io.vn',
+  'ir',
   'mv',
   'mygov.bd',
   'name.np',
@@ -110,4 +112,6 @@ export const UNSUPPORTED_TLDS = [
   'xn--mgbcpq6gpa1a',
   'xn--node',
   'xn--wgbh1c',
+
+  'ae', // should work but idk
 ];
