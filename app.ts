@@ -57,21 +57,6 @@ const getDnsRecords = async (domain: string, type: string) => {
   return result.Answer?.map((e) => e.data) || [];
 };
 
-const resolveRegistrarResult = (
-  whois:
-    | { registered: false }
-    | {
-        registered: true;
-        registrar: string | null;
-        createdAt: Date | null;
-      }
-) => {
-  if (!whois.registered) return 'not registered';
-  if (whois.registrar) return whois.registrar;
-  if (whois.createdAt) return 'unknown';
-  return null;
-};
-
 const analyzeDomain = async (domain: string) => {
   const [dnssec, whois, recordsNs, recordsDs, recordsDnskey] =
     await Promise.all([
@@ -84,8 +69,8 @@ const analyzeDomain = async (domain: string) => {
 
   return {
     dnssec,
-    registrar: resolveRegistrarResult(whois),
-    createdAt: whois.registered ? whois.createdAt : null,
+    registrar: whois.registrar,
+    createdAt: whois.createdAt,
     recordsNs,
     recordsDs,
     recordsDnskey,
