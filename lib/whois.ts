@@ -31,14 +31,27 @@ export const lookupWhois = async (domain: string) => {
 };
 
 const UNREGISTERED_INDICATORS = [
+  'domain not found',
+  'no information available',
+  'no se encuentra registrado', // ar
+  'object_not_found', // mx
   'available for registration',
   'is free', // .nl
+  'no data was found', // co.il
+  'no entries found', // cz
   'no data found',
+  'no information was found',
   'no match',
   'no object found',
   'not been registered',
+  'does not exist', // top
   'not found',
+  'reserved', // fit len.fit / 5735.win
   'status: free',
+  'status: available', // eu
+  'available', // africa
+  ' available', // it
+  ' unassignable', // postiglione.sa.it
 ];
 
 const resolveRegistrarResult = (whois: {
@@ -53,7 +66,10 @@ const resolveRegistrarResult = (whois: {
 
 export const getWhoisSummary = async (domain: string) => {
   const tld = getPublicSuffix(domain);
-  if (!tld || UNSUPPORTED_WHOIS_TLDS.includes(tld)) {
+  if (
+    !tld ||
+    UNSUPPORTED_WHOIS_TLDS.some((e) => e === tld || tld?.endsWith(`.${e}`))
+  ) {
     return {
       registrar: 'unknown',
       createdAt: null,
